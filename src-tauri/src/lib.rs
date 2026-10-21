@@ -7,6 +7,7 @@
 mod ciclo;
 mod db;
 mod docs;
+mod ffmpeg;
 mod libreria;
 mod log;
 mod obs_backup;
@@ -40,6 +41,9 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        // Posizione e dimensione della finestra principale tra un avvio e
+        // l'altro. La stage view no: si piazza da se' sul monitor libero.
+        .plugin(tauri_plugin_window_state::Builder::default().with_denylist(&["stage"]).build())
         .setup(|app| {
             let paths = Paths::resolve(app.handle())?;
             let log = log::Log::new(paths.config_dir.join("log"));
@@ -66,6 +70,7 @@ pub fn run() {
             docs::json_importa,
             obs_backup::obs_backup,
             obs_backup::obs_backtrack_verticale,
+            ffmpeg::ffmpeg_installa,
             reaper::reaper_status,
             reaper::reaper_action,
             reaper::reaper_bridge,

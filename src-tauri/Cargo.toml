@@ -21,11 +21,13 @@ tauri-plugin-global-shortcut = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 rusqlite = { version = "0.40", features = ["bundled"] }
-reqwest = { version = "0.13", default-features = false }
+reqwest = { version = "0.13", default-features = false, features = ["rustls"] }
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
 dirs = "6"
 rustfft = "6"
 trash = "5"
+zip = { version = "9.0.5", default-features = false, features = ["deflate"] }
+tauri-plugin-window-state = "2.5.0"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61", features = [

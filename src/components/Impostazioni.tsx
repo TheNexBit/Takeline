@@ -60,8 +60,8 @@ function CampoCartella({
 }
 
 export function Impostazioni() {
-  const { impostazioniAperte, impostazioni, percorsi } = useApp();
-  const { apriImpostazioni, salvaImpostazioni, avvisa } = useApp.getState();
+  const { impostazioniAperte, impostazioni, percorsi, ffmpeg, installazioneFfmpeg } = useApp();
+  const { apriImpostazioni, salvaImpostazioni, avvisa, installaFfmpeg } = useApp.getState();
   const [bozza, setBozza] = useState<TipoImpostazioni>(impostazioni);
   const [scheda, setScheda] = useState<SchedaImpostazioni>('obs');
   const [provaReaper, setProvaReaper] = useState<Prova>({ inCorso: false });
@@ -363,7 +363,7 @@ export function Impostazioni() {
       )}
 
       {scheda === 'ffmpeg' && (
-        <Sezione titolo="ffmpeg" descrizione="Serve per la post-produzione. Takeline non lo include: winget install Gyan.FFmpeg">
+        <Sezione titolo="ffmpeg" descrizione="Serve per la post-produzione. Takeline non lo include ma può procurarselo da solo.">
           <div className="py-3.5">
             <Campo etichetta="Eseguibile" aiuto="Vuoto = ffmpeg dal PATH di Windows.">
               <CampoCartella
@@ -375,6 +375,33 @@ export function Impostazioni() {
               />
             </Campo>
           </div>
+          <Riga
+            titolo="Installa ffmpeg"
+            descrizione={
+              installazioneFfmpeg
+                ? installazioneFfmpeg.testo
+                : ffmpeg?.trovato && ffmpeg.ffprobe
+                  ? `Già a posto: versione ${ffmpeg.versione ?? 'sconosciuta'}.`
+                  : 'Prima prova con winget; se non c’è, scarica la build essentials e la tiene nella cartella dati. Alla fine compila il campo qui sopra.'
+            }
+          >
+            <span className="flex items-center gap-3">
+              {installazioneFfmpeg && installazioneFfmpeg.quota >= 0 && (
+                <span className="tabular-nums text-[13px] text-slate-400">{Math.round(installazioneFfmpeg.quota * 100)}%</span>
+              )}
+              <Pulsante
+                icona={installazioneFfmpeg ? Loader2 : Download}
+                disabled={!!installazioneFfmpeg}
+                onClick={async () => {
+                  await installaFfmpeg();
+                  // L'installazione salva il percorso: la bozza aperta deve seguirlo.
+                  modifica((b) => (b.ffmpeg.percorso = useApp.getState().impostazioni.ffmpeg.percorso));
+                }}
+              >
+                {installazioneFfmpeg ? 'In corso' : 'Installa'}
+              </Pulsante>
+            </span>
+          </Riga>
         </Sezione>
       )}
 

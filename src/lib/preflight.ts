@@ -16,6 +16,7 @@ export type AzionePreflight =
   | 'editor'
   | 'impostazioni'
   | 'pedale'
+  | 'installaFfmpeg'
   | 'libreria'
   | 'armaTracce'
   | 'patchbay';
@@ -283,8 +284,8 @@ export async function eseguiPreflight(c: ContestoPreflight): Promise<Controllo[]
           id: 'ffmpeg',
           titolo: 'ffmpeg',
           esito: 'avviso',
-          dettaglio: 'Non trovato: niente sync né post-produzione (winget install Gyan.FFmpeg).',
-          azione: { tipo: 'impostazioni', etichetta: 'Impostazioni' },
+          dettaglio: 'Non trovato: niente sync né post-produzione. Takeline può procurarselo da solo.',
+          azione: { tipo: 'installaFfmpeg', etichetta: 'Installa ffmpeg' },
         };
       }
       // Sync, capitoli, proxy e loudnorm passano da ffprobe, che Takeline cerca
@@ -297,8 +298,8 @@ export async function eseguiPreflight(c: ContestoPreflight): Promise<Controllo[]
             esito: 'avviso',
             dettaglio:
               'ffmpeg c’è ma ffprobe manca nella stessa cartella: sync, capitoli, proxy e normalizzazione ' +
-              'falliranno. Indica una build completa (winget install Gyan.FFmpeg) invece di quella inclusa in un altro programma.',
-            azione: { tipo: 'impostazioni', etichetta: 'Impostazioni' },
+              'falliranno. Questa è una build parziale, inclusa in un altro programma: meglio installarne una completa.',
+            azione: { tipo: 'installaFfmpeg', etichetta: 'Installa ffmpeg' },
           };
     }),
   ]);

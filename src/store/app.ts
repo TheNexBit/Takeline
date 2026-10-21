@@ -1,9 +1,12 @@
+import { listen } from '@tauri-apps/api/event';
 import { create } from 'zustand';
 
 import { applicaPreset, type CampoObs, type RapportoApplicazione } from '../lib/applicaPreset';
 import {
   backend,
+  EVENTO_FFMPEG,
   messaggioErrore,
+  type AvanzamentoFfmpeg,
   type InfoFfmpeg,
   type PercorsiApp,
   type ReaperStato,
@@ -73,6 +76,8 @@ interface StatoApp {
   reaper: { stato: ReaperStato | null; errore: string | null };
   disco: SpazioDisco | null;
   ffmpeg: InfoFfmpeg | null;
+  /** Non nullo mentre ffmpeg si sta installando. */
+  installazioneFfmpeg: AvanzamentoFfmpeg | null;
 
   rapporto: RapportoApplicazione | null;
   applicando: boolean;
@@ -104,6 +109,8 @@ interface StatoApp {
   chiudiRapporto(): void;
   apriEditor(id: string | null): void;
   apriImpostazioni(aperte: boolean): void;
+  /** Procura ffmpeg e lo salva nelle impostazioni: una volta sola, non in parallelo. */
+  installaFfmpeg(): Promise<void>;
   avvisa(tipo: TipoAvviso, testo: string): void;
   chiudiAvviso(id: number): void;
 }
@@ -194,6 +201,7 @@ export const useApp = create<StatoApp>()((set, get) => {
     reaper: { stato: null, errore: null },
     disco: null,
     ffmpeg: null,
+    installazioneFfmpeg: null,
     rapporto: null,
     applicando: false,
     avvisi: [],
@@ -459,6 +467,32 @@ export const useApp = create<StatoApp>()((set, get) => {
     chiudiRapporto: () => set({ rapporto: null }),
     apriEditor: (inModifica) => set({ inModifica }),
     apriImpostazioni: (impostazioniAperte) => set({ impostazioniAperte }),
+
+    async installaFfmpeg() {
+      if (get().installazioneFfmpeg) return;
+      set({ installazioneFfmpeg: { fase: 'avvio', quota: -1, testo: 'Preparo l’installazione…' } });
+      // Nell'anteprima nel browser non c'e' il backend: resta solo l'esito.
+      let stacca = () => {};
+      try {
+        stacca = await listen<AvanzamentoFfmpeg>(EVENTO_FFMPEG, ({ payload }) => set({ installazioneFfmpeg: payload }));
+      } catch {
+        /* senza eventi si vede solo "Preparo…", poi l'esito. */
+      }
+      try {
+        const percorso = await backend.installaFfmpeg();
+        log.info('app', `ffmpeg installato: ${percorso}`);
+        const imp = get().impostazioni;
+        // Percorso assoluto anche dopo winget: il PATH di questo processo e'
+        // quello di quando Takeline e' partita e non vede l'installazione nuova.
+        await get().salvaImpostazioni({ ...imp, ffmpeg: { ...imp.ffmpeg, percorso } });
+        get().avvisa('ok', `ffmpeg pronto: ${percorso}`);
+      } catch (e) {
+        get().avvisa('errore', `Installazione di ffmpeg non riuscita: ${messaggioErrore(e)}`);
+      } finally {
+        stacca();
+        set({ installazioneFfmpeg: null });
+      }
+    },
 
     avvisa(tipo, testo) {
       const id = prossimoAvviso++;

@@ -38,6 +38,8 @@ function useAzione() {
           return preset && apriEditor(preset);
         case 'impostazioni':
           return apriImpostazioni(true);
+        case 'installaFfmpeg':
+          return await useApp.getState().installaFfmpeg();
         case 'pedale':
           return useRegia.setState({ pedaleAperto: true });
         case 'libreria':

@@ -35,8 +35,10 @@ camera / schermo ─────────────────► OBS ─�
   (già presente su Windows 11)
 - [OBS Studio](https://obsproject.com/) 30 o successivo (obs-websocket v5 è incluso)
 - [Reaper](https://www.reaper.fm/)
-- [ffmpeg](https://ffmpeg.org/) nel `PATH` o indicato nelle impostazioni:
-  `winget install Gyan.FFmpeg`. Takeline lo usa ma non lo include. Serve una build
+- [ffmpeg](https://ffmpeg.org/) nel `PATH` o indicato nelle impostazioni. Takeline lo
+  usa ma non lo include: se manca, **Impostazioni › ffmpeg › Installa** (o il pulsante
+  nel pre-flight) se lo procura da solo, prima con `winget install Gyan.FFmpeg` e, se
+  winget non c’è, scaricando la build *essentials* nella cartella dati. Serve una build
   completa: `ffprobe` viene cercato nella stessa cartella di `ffmpeg` e senza di lui
   sync, capitoli, proxy e normalizzazione non partono. Le copie incluse in altri
   programmi (ShareX, CapCut) spesso hanno solo `ffmpeg.exe`; il pre-flight lo segnala.
@@ -289,6 +291,9 @@ della scaletta, ultimo marker, stato di replay buffer, Reaper e pedale. Anche i 
 (“BUONO”, “TAKE 04 SCARTATO”, errori) compaiono qui, in grande. F11 o doppio clic
 alternano il tutto schermo.
 
+La finestra principale riapre dove e come l’avevi lasciata (posizione, dimensione,
+massimizzata). La stage view no: si piazza da sé sul monitor libero a ogni apertura.
+
 ### Scaletta
 
 Per le formazioni: scrivi le sezioni nella scheda Regia, una per riga. Alla prima take
@@ -472,6 +477,7 @@ src-tauri/src/           backend Rust
   post.rs                coda di post-produzione (ffmpeg con avanzamento e annullamento)
   ciclo.rs               libreria, archivio, Cestino, capitoli YouTube ed EDL
   system.rs              spazio disco, cartelle, ffmpeg, finestra attiva (Win32)
+  ffmpeg.rs              installazione di ffmpeg: winget, altrimenti download
 src-tauri/reaper/        script Lua "Takeline bridge" per Reaper
 script/                  script .bat di sviluppo
 ```

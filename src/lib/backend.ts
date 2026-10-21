@@ -42,6 +42,17 @@ export interface EsitoBackup {
   cartellaObs: string;
 }
 
+/** Evento con l'avanzamento di `installaFfmpeg`. */
+export const EVENTO_FFMPEG = 'takeline://ffmpeg-installazione';
+
+export interface AvanzamentoFfmpeg {
+  /** winget, scarico, estrazione, fatto. */
+  fase: string;
+  /** Da 0 a 1; -1 quando non si può sapere quanto manca. */
+  quota: number;
+  testo: string;
+}
+
 /** Backtrack del plugin Aitum Vertical Canvas, letto dalla config di OBS. */
 export interface BacktrackVerticale {
   installato: boolean;
@@ -218,6 +229,8 @@ export const backend = {
   spazioDisco: (percorso: string) => invoke<SpazioDisco>('disk_space', { percorso }),
   assicuraCartella: (percorso: string) => invoke<ControlloCartella>('ensure_dir', { percorso }),
   ffmpeg: (percorso: string) => invoke<InfoFfmpeg>('ffmpeg_info', { percorso }),
+  /** Installa ffmpeg (winget, altrimenti download) e torna il percorso da salvare. */
+  installaFfmpeg: () => invoke<string>('ffmpeg_installa'),
   db: () => invoke<InfoDb>('db_info'),
   cartellaLog: () => invoke<string>('log_cartella'),
   fileRecenti: (cartella: string, dopoMs: number) =>

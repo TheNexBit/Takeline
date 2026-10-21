@@ -92,8 +92,9 @@ pub struct FfmpegInfo {
     pub errore: Option<String>,
 }
 
-pub fn ffmpeg_command(percorso: &str) -> Command {
-    let exe = if percorso.trim().is_empty() { "ffmpeg" } else { percorso.trim() };
+/// I programmi esterni non devono far lampeggiare un prompt sullo schermo:
+/// durante una take la finestra ruberebbe il fuoco.
+pub fn comando_nascosto(exe: &str) -> Command {
     #[allow(unused_mut)]
     let mut cmd = Command::new(exe);
     #[cfg(windows)]
@@ -103,6 +104,10 @@ pub fn ffmpeg_command(percorso: &str) -> Command {
         cmd.creation_flags(CREATE_NO_WINDOW);
     }
     cmd
+}
+
+pub fn ffmpeg_command(percorso: &str) -> Command {
+    comando_nascosto(if percorso.trim().is_empty() { "ffmpeg" } else { percorso.trim() })
 }
 
 /// ffprobe si cerca accanto a ffmpeg: le build complete lo portano con se',
