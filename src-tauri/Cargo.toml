@@ -1,0 +1,41 @@
+[package]
+name = "takeline"
+version = "0.1.0"
+description = "Console operativa per OBS Studio e Reaper"
+authors = ["Domenico Coletta"]
+license = "MIT"
+edition = "2021"
+
+[lib]
+name = "takeline_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-global-shortcut = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+rusqlite = { version = "0.40", features = ["bundled"] }
+reqwest = { version = "0.13", default-features = false }
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+dirs = "6"
+rustfft = "6"
+trash = "5"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = [
+  "Win32_Foundation",
+  "Win32_Storage_FileSystem",
+  "Win32_System_Threading",
+  "Win32_UI_WindowsAndMessaging",
+] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+strip = true

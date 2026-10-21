@@ -1,0 +1,33 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Permessi della finestra principale e della stage view",
+  "windows": [
+    "main",
+    "stage"
+  ],
+  "permissions": [
+    "core:default",
+    "core:webview:allow-create-webview-window",
+    "core:window:allow-set-fullscreen",
+    "core:window:allow-set-position",
+    "core:window:allow-set-size",
+    "core:window:allow-set-focus",
+    "core:window:allow-close",
+    "core:window:allow-is-fullscreen",
+    "opener:default",
+    {
+      "identifier": "opener:allow-open-path",
+      "allow": [
+        {
+          "path": "**"
+        }
+      ]
+    },
+    "opener:allow-reveal-item-in-dir",
+    "dialog:default",
+    "global-shortcut:allow-register",
+    "global-shortcut:allow-unregister",
+    "global-shortcut:allow-unregister-all"
+  ]
+}

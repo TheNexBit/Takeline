@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-fondo font-sans text-sm text-zinc-200 antialiased;
+  user-select: none;
+}
+
+input,
+textarea,
+select {
+  user-select: text;
+}
+
+/* Barre di scorrimento discrete, come il resto della console. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  @apply rounded-full border-2 border-solid border-transparent bg-zinc-700 bg-clip-padding;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@keyframes scorri {
+  to {
+    background-position: 16px 0;
+  }
+}
+
+.flusso-attivo {
+  background-image: repeating-linear-gradient(90deg, currentColor 0 6px, transparent 6px 10px);
+  background-size: 16px 2px;
+  animation: scorri 0.6s linear infinite;
+}

@@ -1,0 +1,725 @@
+<title>Collaudo Takeline</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  /* Banco di collaudo: colonna di sezioni a sinistra, passi a destra; su telefono una colonna sola. */
+  :root {
+    --bg: #f3f4f6;
+    --carta: #ffffff;
+    --rilievo: #e9ebef;
+    --bordo: #d5d9e0;
+    --testo: #1b1f27;
+    --tenue: #5b6372;
+    --rec: #d63a3f;
+    --ok: #1f8a5b;
+    --ok-fondo: #e2f4ea;
+    --ko: #c4332f;
+    --ko-fondo: #fbe5e4;
+    --salta: #7a6a2c;
+    --salta-fondo: #f5efd9;
+    --font-titoli: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+    --font-testo: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1115;
+      --carta: #171a20;
+      --rilievo: #20242c;
+      --bordo: #2e333d;
+      --testo: #e7e9ee;
+      --tenue: #9aa2b1;
+      --rec: #ef5a5f;
+      --ok: #4cc38a;
+      --ok-fondo: #15322a;
+      --ko: #f2716c;
+      --ko-fondo: #3a1d1d;
+      --salta: #d8c27a;
+      --salta-fondo: #332c17;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1115;
+    --carta: #171a20;
+    --rilievo: #20242c;
+    --bordo: #2e333d;
+    --testo: #e7e9ee;
+    --tenue: #9aa2b1;
+    --rec: #ef5a5f;
+    --ok: #4cc38a;
+    --ok-fondo: #15322a;
+    --ko: #f2716c;
+    --ko-fondo: #3a1d1d;
+    --salta: #d8c27a;
+    --salta-fondo: #332c17;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--testo);
+    font-family: var(--font-testo);
+    font-size: 16px;
+    line-height: 1.5;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 0 48px;
+  }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+  h1, h2, h3 { font-family: var(--font-titoli); text-wrap: balance; margin: 0; }
+  code, kbd { font-family: var(--font-mono); font-size: 0.86em; }
+  kbd { border: 1px solid var(--bordo); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--carta); }
+  code { background: var(--rilievo); border-radius: 4px; padding: 1px 5px; overflow-wrap: anywhere; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px solid var(--rec); outline-offset: 2px; }
+
+  .pagina { max-width: 1120px; margin: 0 auto; }
+
+  /* Testata */
+  .testata {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 5;
+    background: var(--bg);
+    padding-block: 18px 14px;
+    border-bottom: 1px solid var(--bordo);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .riga-titolo { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .marchio { display: flex; align-items: center; gap: 10px; }
+  .spia { width: 14px; height: 14px; border-radius: 50%; background: var(--rec); box-shadow: 0 0 0 4px color-mix(in srgb, var(--rec) 22%, transparent); flex: none; }
+  h1 { font-size: 30px; font-weight: 700; letter-spacing: 0.01em; }
+  .sottotitolo { color: var(--tenue); font-size: 14px; }
+  .spazio { flex: 1; }
+  .salvataggio { font-size: 13px; color: var(--tenue); display: flex; align-items: center; gap: 6px; }
+  .salvataggio::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--tenue); }
+  .salvataggio[data-stato="db"]::before { background: var(--ok); }
+  .salvataggio[data-stato="locale"]::before { background: var(--salta); }
+
+  .avanzamento { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .barra { flex: 1 1 220px; height: 10px; border-radius: 99px; background: var(--rilievo); overflow: hidden; display: flex; }
+  .barra span { display: block; height: 100%; }
+  .barra .b-ok { background: var(--ok); }
+  .barra .b-ko { background: var(--ko); }
+  .barra .b-salta { background: var(--salta); }
+  .conteggi { font-family: var(--font-titoli); font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .conteggi .n-ko { color: var(--ko); }
+  .filtri { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    border: 1px solid var(--bordo);
+    background: var(--carta);
+    border-radius: 99px;
+    padding: 5px 12px;
+    font-size: 14px;
+  }
+  .chip[aria-pressed="true"] { background: var(--testo); color: var(--bg); border-color: var(--testo); }
+  .pulsante {
+    border: 1px solid var(--bordo);
+    background: var(--carta);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .pulsante:hover { border-color: var(--tenue); }
+
+  /* Corpo */
+  .corpo { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 28px; padding-top: 22px; }
+  .indice { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 150px); align-self: start; display: flex; flex-direction: column; gap: 2px; }
+  .indice a {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    color: var(--testo);
+    text-decoration: none;
+    font-size: 14px;
+  }
+  .indice a:hover { background: var(--rilievo); }
+  .indice .quanti { color: var(--tenue); font-variant-numeric: tabular-nums; }
+  .indice .quanti.finito { color: var(--ok); }
+  .indice .quanti.male { color: var(--ko); }
+
+  .sezioni { display: flex; flex-direction: column; gap: 34px; min-width: 0; }
+  .sezione { scroll-margin-top: 170px; display: flex; flex-direction: column; gap: 12px; }
+  .sezione header { display: flex; flex-direction: column; gap: 4px; }
+  .etichetta { font-family: var(--font-titoli); font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--rec); }
+  .sezione h2 { font-size: 26px; font-weight: 700; }
+  .sezione .intro { color: var(--tenue); max-width: 68ch; margin: 0; }
+
+  .passo {
+    background: var(--carta);
+    border: 1px solid var(--bordo);
+    border-radius: 10px;
+    border-left-width: 4px;
+  }
+  .passo[data-esito="ok"] { border-left-color: var(--ok); }
+  .passo[data-esito="ko"] { border-left-color: var(--ko); }
+  .passo[data-esito="salta"] { border-left-color: var(--salta); }
+  .testa-passo { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; }
+  .apri {
+    background: none;
+    border: 0;
+    padding: 0;
+    text-align: left;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    gap: 10px;
+  }
+  .num { font-family: var(--font-mono); color: var(--tenue); font-size: 13px; padding-top: 3px; min-width: 2.4em; }
+  .titolo-passo { font-weight: 700; }
+  .freccia { color: var(--tenue); transition: transform 0.15s; display: inline-block; margin-left: 4px; }
+  .passo[data-aperto="true"] .freccia { transform: rotate(90deg); }
+  .esiti { display: flex; gap: 6px; flex: none; }
+  .esito {
+    border: 1px solid var(--bordo);
+    background: var(--carta);
+    border-radius: 7px;
+    padding: 4px 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--tenue);
+    min-height: 32px;
+  }
+  .esito[data-v="ok"][aria-pressed="true"] { background: var(--ok-fondo); border-color: var(--ok); color: var(--ok); }
+  .esito[data-v="ko"][aria-pressed="true"] { background: var(--ko-fondo); border-color: var(--ko); color: var(--ko); }
+  .esito[data-v="salta"][aria-pressed="true"] { background: var(--salta-fondo); border-color: var(--salta); color: var(--salta); }
+
+  .dettaglio { padding: 0 14px 14px calc(14px + 2.4em + 10px); display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px 22px; }
+  .dettaglio[hidden] { display: none !important; }
+  .blocco h3 { font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tenue); margin-bottom: 4px; }
+  .blocco ol, .blocco ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 3px; }
+  .blocco.seno { grid-column: 1 / -1; background: var(--rilievo); border-radius: 8px; padding: 10px 12px; font-size: 15px; }
+  .nota { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 4px; }
+  .nota label { font-size: 13px; color: var(--tenue); }
+  .nota textarea {
+    width: 100%;
+    min-height: 70px;
+    resize: vertical;
+    border: 1px solid var(--bordo);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--testo);
+    padding: 8px 10px;
+    font: inherit;
+    font-size: 15px;
+  }
+  .vuoto { color: var(--tenue); font-style: italic; padding: 8px 0; }
+  .avviso-fine { background: var(--carta); border: 1px dashed var(--bordo); border-radius: 10px; padding: 16px 18px; }
+
+  @media (max-width: 820px) {
+    .corpo { grid-template-columns: minmax(0, 1fr); }
+    .indice { display: none; }
+    .testa-passo { flex-wrap: wrap; }
+    .esiti { width: 100%; justify-content: flex-end; }
+    .dettaglio { padding-left: 14px; }
+    .sezione { scroll-margin-top: 200px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="pagina">
+  <div class="testata">
+    <div class="riga-titolo">
+      <div class="marchio">
+        <span class="spia" aria-hidden="true"></span>
+        <div>
+          <h1>Collaudo Takeline</h1>
+          <div class="sottotitolo">Milestone 1–5 · da fare a casa con chitarra, interfaccia, OBS e Reaper</div>
+        </div>
+      </div>
+      <div class="spazio"></div>
+      <span class="salvataggio" id="salvataggio" data-stato="attesa">Collegamento al salvataggio…</span>
+    </div>
+    <div class="avanzamento">
+      <div class="barra" id="barra" role="img" aria-label="Avanzamento"></div>
+      <span class="conteggi" id="conteggi"></span>
+    </div>
+    <div class="riga-titolo">
+      <div class="filtri" role="group" aria-label="Filtro">
+        <button class="chip" id="f-tutti" data-filtro="tutti" aria-pressed="true">Tutti</button>
+        <button class="chip" id="f-dafare" data-filtro="dafare" aria-pressed="false">Da fare</button>
+        <button class="chip" id="f-problemi" data-filtro="problemi" aria-pressed="false">Con problemi</button>
+      </div>
+      <div class="spazio"></div>
+      <button class="pulsante" id="copia">Copia riepilogo</button>
+    </div>
+  </div>
+
+  <div class="corpo">
+    <nav class="indice" id="indice" aria-label="Sezioni"></nav>
+    <main class="sezioni" id="sezioni"></main>
+  </div>
+</div>
+
+<script>
+  // --- contenuto --------------------------------------------------------------
+  // Ogni passo: cosa fare, cosa deve succedere, e cosa annotare se non va.
+  const SEZIONI = [
+    {
+      id: 'preparazione', etichetta: 'Prima di iniziare', titolo: 'Portare Takeline a casa e avviarla',
+      intro: 'Il codice per ora è solo sul PC dell’ufficio, nella cartella C:\\sviluppo\\Takeline, senza commit.',
+      passi: [
+        { id: 'p-copia', titolo: 'Avere il progetto sul PC di casa',
+          fai: ['Copia la cartella <code>C:\\sviluppo\\Takeline</code> su una chiavetta, senza <code>node_modules</code>, <code>src-tauri\\target</code> e <code>dev-dati</code> (si ricreano).', 'In alternativa chiedimi di fare commit e push su GitHub e poi clonalo a casa.'],
+          atteso: ['Sul PC di casa c’è la cartella con <code>script\\</code>, <code>src\\</code>, <code>src-tauri\\</code>.'] },
+        { id: 'p-setup', titolo: 'Installare con setup.bat',
+          fai: ['Doppio clic su <code>script\\setup.bat</code>.', 'Se manca qualcosa (Node, Rust, Build Tools di Visual Studio, WebView2, ffmpeg) installalo col comando che suggerisce e rilancialo.'],
+          atteso: ['Finisce con “Fatto. Ora avvia script\\dev.bat”.'],
+          seno: 'Copia nella nota l’ultima riga di errore.' },
+        { id: 'p-verifica', titolo: 'Verifica automatica',
+          fai: ['Doppio clic su <code>script\\verifica.bat</code> (qualche minuto la prima volta).'],
+          atteso: ['Sei passi superati e alla fine “Tutto a posto.”', 'Nel passo 5 una riga “verifica: inizio … drift …” con valori vicini a zero.'],
+          seno: 'Annota il numero del passo che fallisce.' },
+        { id: 'p-dev', titolo: 'Aprire l’app con dev.bat',
+          fai: ['Doppio clic su <code>script\\dev.bat</code>. La prima compilazione dura qualche minuto.'],
+          atteso: ['Si apre la finestra Takeline con le schede Regia, Libreria, Patchbay.', 'In Impostazioni › Dati e log › Log c’è il file del giorno: è quello che leggerò io.'] },
+      ],
+    },
+    {
+      id: 'collegamenti', etichetta: 'Milestone 1', titolo: 'Collegare OBS e Reaper',
+      intro: 'Una volta sola. Le pillole in alto nell’app devono diventare verdi.',
+      passi: [
+        { id: 'c-obs', titolo: 'OBS via websocket',
+          fai: ['In OBS: Strumenti › Impostazioni server WebSocket › Abilita.', 'Copia la password (Mostra informazioni di connessione).', 'In Takeline: ⚙ Impostazioni › OBS › Password › Salva.'],
+          atteso: ['Pillola “OBS 32.x” verde in alto.', 'Patchbay › riquadro OBS con collezione, profilo, scena e risoluzione giusti.'] },
+        { id: 'c-reaper', titolo: 'Reaper via interfaccia web',
+          fai: ['In Reaper: Options › Preferences › Control/OSC/web › Add › Web browser interface, porta 8080.', 'In Takeline: Impostazioni › Reaper › Prova connessione.'],
+          atteso: ['“Reaper risponde: N tracce…”.', 'Pillola Reaper verde; in Patchbay le tracce con i pallini di armo.'] },
+        { id: 'c-bridge', titolo: 'Script bridge in Reaper (versione aggiornata)',
+          fai: ['Impostazioni › Reaper › Installa script.', 'In Reaper: Actions › Show action list › New action › Load ReaScript › scegli il file copiato (se c’era già, va bene ricaricarlo).', 'Tasto destro sull’azione › Copy selected action command ID › incollalo in Takeline › Prova.'],
+          atteso: ['“Risposta dello script: pong takeline”.'],
+          seno: 'Annota cosa risponde il pulsante Prova.' },
+        { id: 'c-replay', titolo: 'Replay buffer in OBS',
+          fai: ['In OBS: Impostazioni › Uscita › Buffer di replay › Abilita.'],
+          atteso: ['Dopo aver applicato il preset (prossima sezione) il riquadro Replay buffer della Regia dice “Copre gli ultimi…”.'] },
+        { id: 'c-guida', titolo: 'Traccia guida dal monitor out',
+          fai: ['In OBS aggiungi una sorgente “Acquisizione ingresso audio” collegata al loopback o monitor out della tua interfaccia.', 'Chiamala per esempio “Guida”.', 'Suona: in Patchbay la sua barra deve muoversi.'],
+          atteso: ['La sorgente compare in Patchbay › Sorgenti audio OBS con il livello che si muove.'],
+          seno: 'Scrivi il modello dell’interfaccia: ti dico come fare il loopback.' },
+      ],
+    },
+    {
+      id: 'preset', etichetta: 'Milestone 1', titolo: 'Preset',
+      intro: 'Il preset prepara OBS in un clic. Prima di cambiare qualcosa fa sempre un backup.',
+      passi: [
+        { id: 'r-nuovo', titolo: 'Nuovo preset dalla configurazione di OBS',
+          fai: ['In OBS apri la raccolta e la scena che usi per suonare.', 'In Takeline: + Nuovo › nome (es. “Chitarra casa”) › Parti da “OBS di adesso” › tipo Video musicale › Crea e modifica.', 'Scheda OBS e file: Traccia guida = “Guida”. Salva.'],
+          atteso: ['Il preset compare nella lista e si apre l’editor.'] },
+        { id: 'r-applica', titolo: 'Applicare il preset',
+          fai: ['Clic sul preset › Applica.'],
+          atteso: ['Riquadro “Applicato” con tutti i passi verdi (backup, collezione, profilo, scena, cartella, nomi, frame rate, replay buffer, Reaper).', '“Apri backup” apre una cartella con LEGGIMI.txt.'],
+          seno: 'Annota il passo rosso o giallo e il suo testo.' },
+        { id: 'r-nomi', titolo: 'Nomi dei file',
+          fai: ['Scrivi un titolo in alto (es. “Blues in La”).', 'Apri il preset › OBS e file: guarda l’anteprima del nome.'],
+          atteso: ['Esempio tipo <code>2026-10-21_Blues in La_take03.mkv</code> e formato OBS con <code>%CCYY-%MM-%DD</code>.'] },
+        { id: 'r-gestione', titolo: 'Duplica, sposta, esporta, importa, elimina',
+          fai: ['⋯ su un preset › Duplica, poi Sposta su/giù.', '⋯ › Esporta in un file, poi ⋯ in cima alla lista › Importa da un file (scegli “Tieni entrambi”).', 'Elimina la copia (deve chiedere conferma); prova a eliminare il preset attivo.'],
+          atteso: ['Ogni operazione funziona; il preset attivo non si può eliminare (voce spenta con spiegazione).'] },
+        { id: 'r-patchbay', titolo: 'Patchbay',
+          fai: ['Scheda Patchbay. Arma e disarma una traccia in Reaper; muta una sorgente in OBS; suona.'],
+          atteso: ['Pallini delle tracce e icone mute si aggiornano entro un secondo; le barre di livello si muovono.', 'Nessun avviso giallo se tutto corrisponde al preset.'] },
+      ],
+    },
+    {
+      id: 'pedale', etichetta: 'Milestone 2', titolo: 'Pedale e tasti',
+      intro: 'Il pedale è il modo principale; i tasti sono il ripiego.',
+      passi: [
+        { id: 'm-attiva', titolo: 'Attivare il MIDI',
+          fai: ['Collega il pedale. In alto clicca “Pedale” › Attiva MIDI e consenti l’accesso se Windows o WebView2 lo chiede.'],
+          atteso: ['“MIDI attivo” con il nome del dispositivo tra gli ingressi.', 'Premendo il pedale cambia “Ultimo messaggio ricevuto”.'] },
+        { id: 'm-assegna', titolo: 'Assegnare i comandi',
+          fai: ['Assegna almeno: Avvia / ferma take, Marca take buono, Nuovo capitolo, Salva replay buffer.', 'Per ognuno: Assegna › premi il pedale.'],
+          atteso: ['Ogni comando mostra “CC n · canale…” (o Nota/Program).', 'Riassegnando lo stesso pedale a un altro comando, il primo lo perde.'] },
+        { id: 'm-rimbalzo', titolo: 'Niente comandi doppi',
+          fai: ['Con una sessione aperta premi il pedale avvia/ferma una volta sola, deciso.'],
+          atteso: ['Parte una sola take; nel log nessun “arresto” subito dopo.'],
+          seno: 'Annota se il pedale è momentaneo o a scatto e cosa vedi nel log alla voce “midi”.' },
+        { id: 'm-tasti', titolo: 'Tasti di ripiego',
+          fai: ['Prova <kbd>F9</kbd> (avvia/ferma) con la finestra Takeline in primo piano.', 'Facoltativo: attiva “Scorciatoie globali” e prova F9 con Reaper in primo piano.'],
+          atteso: ['F9 avvia e ferma; con le globali funziona anche da Reaper.'] },
+      ],
+    },
+    {
+      id: 'registrazione', etichetta: 'Milestone 2', titolo: 'Prima sessione: take continua',
+      intro: 'Con il preset Video musicale Reaper registra per tutta la sessione; ogni take è un file video e una region.',
+      passi: [
+        { id: 's-stage', titolo: 'Stage view sul secondo monitor',
+          fai: ['Regia › Stage view.'],
+          atteso: ['Si apre a tutto schermo sull’altro monitor (con un monitor solo: in finestra, <kbd>F11</kbd> per il tutto schermo).', 'Si legge da dove suoni, anche di sbieco.'],
+          seno: 'Scrivi da che distanza non si legge più e cosa.' },
+        { id: 's-sessione', titolo: 'Avviare la sessione',
+          fai: ['Regia › Avvia sessione.'],
+          atteso: ['Reaper entra in registrazione sulle tracce che hai armato tu (le altre restano disarmate).', 'Stage view: “PRONTO”.'] },
+        { id: 's-take', titolo: 'Prima take col pedale',
+          fai: ['Pedale avvia/ferma, suona 20 secondi, pedale di nuovo.'],
+          atteso: ['Stage: REC rosso, timecode che scorre, “TAKE 01”, flash bianco e click all’avvio.', 'Alla fine: “TAKE 01 · 0:20”; Reaper continua a registrare.', 'In Reaper un marker CLAP e una region “… · take 01”.'] },
+        { id: 's-marker', titolo: 'Marker durante la take',
+          fai: ['Nuova take: durante, premi “buono”, poi “nuovo capitolo”.'],
+          atteso: ['In stage view compaiono “BUONO” e “CAPITOLO · …” in grande, e l’ultimo marker in basso.', 'In Reaper marker colorati con nome.'] },
+        { id: 's-lunga', titolo: 'Una take lunga (almeno 1 minuto e mezzo)',
+          fai: ['Registra una take di almeno 90 secondi: serve al sync per misurare il drift.'],
+          atteso: ['Nessun allarme in stage view.'] },
+        { id: 's-replay', titolo: 'Replay buffer',
+          fai: ['Tra una take e l’altra suona qualcosa e poi premi “salva replay” (o <kbd>F10</kbd>).'],
+          atteso: ['Stage: “REPLAY SALVATO · m:ss”.', 'Nella lista dei take una riga con la R viola; in Reaper una region “replay”.'] },
+        { id: 's-fine', titolo: 'Fine sessione',
+          fai: ['Regia › Fine sessione.'],
+          atteso: ['Reaper si ferma.', 'Poco dopo, nella colonna Sync dei take, compare “misuro…” e poi un valore in ppm.'] },
+      ],
+    },
+    {
+      id: 'sync', etichetta: 'Milestone 3', titolo: 'Sync tra video e audio',
+      intro: 'Dopo la sessione Takeline misura offset e drift e crea il video con l’audio di Reaper allineato.',
+      passi: [
+        { id: 'y-valori', titolo: 'Valori di sync',
+          fai: ['Passa il mouse sulla colonna Sync della take lunga.'],
+          atteso: ['Drift di poche decine di ppm al massimo, confidenza sopra 2,5, “frame rate costante”.', 'Segno verde (giallo solo se c’è un avviso, che si legge nel tooltip).'],
+          seno: 'Copia nella nota il testo del tooltip.' },
+        { id: 'y-video', titolo: 'Video sincronizzato',
+          fai: ['⋯ nella colonna Sync › Mostra il video sincronizzato.', 'Aprilo e guarda le mani: all’inizio e alla fine della take.'],
+          atteso: ['File <code>…_sync.mp4</code> e <code>…_audio_sync.wav</code> accanto al video.', 'Pennata e suono coincidono sia all’inizio che alla fine.'],
+          seno: 'Scrivi se è fuori all’inizio, alla fine o sempre, e di quanto a occhio.' },
+        { id: 'y-ascolta', titolo: 'Ascolta in Reaper e file audio',
+          fai: ['Nella lista dei take: 🎧 Ascolta in Reaper, poi il pulsante del file audio.'],
+          atteso: ['Reaper suona dall’inizio di quel take; Esplora risorse mostra il WAV.'] },
+      ],
+    },
+    {
+      id: 'formazione', etichetta: 'Milestone 2', titolo: 'Formazione: start/stop e scaletta',
+      intro: 'Reaper parte e si ferma con ogni take; la scaletta diventa capitoli.',
+      passi: [
+        { id: 'f-scaletta', titolo: 'Scrivere la scaletta',
+          fai: ['Applica il preset Formazione (collegalo prima alla tua configurazione OBS).', 'Regia › Scaletta: scrivi tre sezioni, una per riga.'],
+          atteso: ['L’elenco compare numerato.'] },
+        { id: 'f-capitoli', titolo: 'Capitoli col pedale',
+          fai: ['Take di almeno 40 secondi; ogni 12 secondi circa premi “nuovo capitolo”.'],
+          atteso: ['Stage: “Sezione 1/3” col nome, e sotto “poi: …”.', 'Ogni pressione passa alla sezione dopo.'] },
+        { id: 'f-startstop', titolo: 'Reaper a ogni take',
+          fai: ['Fai due take di fila.'],
+          atteso: ['Reaper parte e si ferma con ogni take; la seconda viene dopo la prima nella timeline, non sopra.'] },
+        { id: 'f-youtube', titolo: 'Capitoli YouTube',
+          fai: ['Libreria › ⋯ sul take › Capitoli YouTube › Copia.'],
+          atteso: ['Testo tipo “00:00 Intro / 00:12 …” pronto da incollare; avvisi se un capitolo dura meno di 10 s.'] },
+      ],
+    },
+    {
+      id: 'post', etichetta: 'Milestone 4', titolo: 'Post-produzione',
+      intro: 'A fine take le lavorazioni del preset vanno in coda nella scheda Libreria.',
+      passi: [
+        { id: 'o-coda', titolo: 'La coda lavora',
+          fai: ['Nel preset › Post-produzione attiva “Normalizza il loudness” e export “youtube”.', 'Registra una take e aprila in Libreria.'],
+          atteso: ['Coda: Loudness ed Export youtube con percentuale che sale, poi “fatto”.', 'File <code>_14LUFS.mp4</code> e <code>_youtube.mp4</code> accanto al video.'] },
+        { id: 'o-pausa', titolo: 'Pausa durante la registrazione',
+          fai: ['Mentre un export è in corso, avvia una take.'],
+          atteso: ['Il lavoro torna “in attesa” e riparte da solo a take finita; nel log “coda in pausa” e “coda ripresa”.', 'OBS non perde fotogrammi.'] },
+        { id: 'o-annulla', titolo: 'Annulla e riprova',
+          fai: ['Su un lavoro in corso: ✕ Annulla. Poi ↺ Riprova.'],
+          atteso: ['Annullato senza file a metà; riprova lo rifà da capo.'] },
+        { id: 'o-edl', titolo: 'EDL in Resolve',
+          fai: ['Libreria › ⋯ › Esporta EDL.', 'In DaVinci Resolve: Timeline › Import › Timeline Markers from EDL › <code>…_marker_resolve.edl</code>.'],
+          atteso: ['I marker compaiono nei punti giusti con i colori (capitoli blu, buono verde).'],
+          seno: 'Se usi Premiere: annota cosa importa del file .edl.' },
+      ],
+    },
+    {
+      id: 'ciclo', etichetta: 'Milestone 4', titolo: 'Ciclo di vita dei file',
+      intro: 'Niente si cancella senza conferma: “eliminare” vuol dire Cestino di Windows.',
+      passi: [
+        { id: 'v-cestino', titolo: 'Scartati nel Cestino',
+          fai: ['Libreria: segna un take come Scartato.', 'Proposta “take scartati” › Sposta nel Cestino… › leggi l’elenco › conferma.'],
+          atteso: ['La conferma elenca i file e il totale; i WAV di Reaper non ci sono.', 'I file sono nel Cestino di Windows e si possono ripristinare.'] },
+        { id: 'v-archivio', titolo: 'Pubblicati: proxy e archivio',
+          fai: ['Segna un take come Pubblicato › Crea proxy, poi Archivia… su un’altra cartella o disco.'],
+          atteso: ['Nasce <code>_proxy.mp4</code> (720p); archiviando i file si spostano e il take diventa “Archiviato”.'] },
+      ],
+    },
+    {
+      id: 'sicurezza', etichetta: 'Milestone 5', titolo: 'Pre-flight, watchdog, recupero, consenso',
+      intro: 'Le prove di sicurezza: simuli i guasti in modo controllato.',
+      passi: [
+        { id: 'k-preflight', titolo: 'Pre-flight tutto verde',
+          fai: ['Regia › Pre-flight › Controlla. “Mostra tutti i controlli”.'],
+          atteso: ['“Tutto pronto per registrare” o solo avvisi comprensibili, ognuno con il suo pulsante.'],
+          seno: 'Copia i controlli gialli o rossi.' },
+        { id: 'k-blocco', titolo: 'Errore che blocca',
+          fai: ['Chiudi Reaper e premi il pedale avvia/ferma.'],
+          atteso: ['La take non parte; in stage view “PRE-FLIGHT · Reaper: …” in grande.', 'Riaperto Reaper, la take parte.'] },
+        { id: 'k-disco', titolo: 'Watchdog: disco',
+          fai: ['Impostazioni › Sicurezza › Spazio minimo: metti un valore più alto dello spazio libero (es. 2000 GB).', 'Avvia una take e aspetta qualche secondo. Poi rimetti 5.'],
+          atteso: ['Prima il pre-flight blocca. Mettendo la soglia appena sotto il libero, durante la take compare l’allarme e la take si ferma da sola con “DISCO QUASI PIENO · TAKE FERMATA”.'] },
+        { id: 'k-obs', titolo: 'Watchdog: OBS che si chiude',
+          fai: ['Durante una take chiudi OBS. Riaprilo entro 30 secondi.'],
+          atteso: ['Stage: “OBS DISCONNESSO · ATTENDO CHE TORNI”.', 'Riaperto OBS: “OBS SI È RIAVVIATO: TAKE INTERROTTA” e il take resta nella lista.'] },
+        { id: 'k-recupero', titolo: 'Recupero dopo chiusura di Takeline',
+          fai: ['Durante una take chiudi la finestra di Takeline (OBS continua a registrare). Riapri con dev.bat.'],
+          atteso: ['“TAKE nn RIAGGANCIATA”: il pedale la ferma normalmente.'] },
+        { id: 'k-progetto', titolo: 'Cambio di progetto in Reaper',
+          fai: ['Dopo qualche take apri un altro progetto in Reaper e fai una take.'],
+          atteso: ['“NUOVO PROGETTO REAPER · SESSIONE NUOVA” e numerazione da take 01.'] },
+        { id: 'k-consenso', titolo: 'Consenso per le call',
+          fai: ['Applica il preset Call e premi avvia.', 'Prima volta: “Non registrare”. Poi di nuovo: “Tutti d’accordo, registra”.'],
+          atteso: ['Promemoria con il testo del preset; senza conferma non registra; dopo la conferma sì, e per il resto della sessione non lo richiede.'] },
+      ],
+    },
+  ];
+
+  // --- stato ------------------------------------------------------------------
+  const CHIAVE_LOCALE = 'takeline-collaudo-v1';
+  const esiti = {}; // id passo -> { stato: 'ok'|'ko'|'salta'|'', nota: '' }
+  const aperti = new Set();
+  let filtro = 'tutti';
+  let db = null;
+
+  const tuttiPassi = SEZIONI.flatMap((s) => s.passi.map((p) => ({ ...p, sezione: s })));
+  const esitoDi = (id) => esiti[id] ?? { stato: '', nota: '' };
+
+  function leggiLocale() {
+    try {
+      Object.assign(esiti, JSON.parse(localStorage.getItem(CHIAVE_LOCALE) || '{}'));
+    } catch {}
+  }
+  function scriviLocale() {
+    try {
+      localStorage.setItem(CHIAVE_LOCALE, JSON.stringify(esiti));
+    } catch {}
+  }
+
+  // Un'operazione alla volta per passo: l'ultima vince, le note aspettano una pausa.
+  const inVolo = new Map();
+  const attesa = new Map();
+  function salva(id) {
+    scriviLocale();
+    if (!db) return;
+    const corpo = { stato: esitoDi(id).stato, nota: esitoDi(id).nota, aggiornatoIl: new Date().toISOString() };
+    if (inVolo.get(id)) {
+      attesa.set(id, true);
+      return;
+    }
+    inVolo.set(id, true);
+    db.doc('esiti/' + id)
+      .set(corpo)
+      .catch((e) => mostraSalvataggio('locale', 'Salvataggio non riuscito (' + (e?.code || 'errore') + '): resta in questo browser'))
+      .finally(() => {
+        inVolo.set(id, false);
+        if (attesa.get(id)) {
+          attesa.set(id, false);
+          salva(id);
+        }
+      });
+  }
+
+  function mostraSalvataggio(stato, testo) {
+    const el = document.getElementById('salvataggio');
+    el.dataset.stato = stato;
+    el.textContent = testo;
+  }
+
+  // --- disegno ----------------------------------------------------------------
+  function conta(passi) {
+    const c = { ok: 0, ko: 0, salta: 0, totale: passi.length };
+    for (const p of passi) {
+      const s = esitoDi(p.id).stato;
+      if (s) c[s]++;
+    }
+    return c;
+  }
+
+  function disegnaTestata() {
+    const c = conta(tuttiPassi);
+    const pct = (n) => (c.totale ? (n / c.totale) * 100 : 0) + '%';
+    document.getElementById('barra').innerHTML =
+      '<span class="b-ok" style="width:' + pct(c.ok) + '"></span><span class="b-ko" style="width:' + pct(c.ko) +
+      '"></span><span class="b-salta" style="width:' + pct(c.salta) + '"></span>';
+    const fatti = c.ok + c.ko + c.salta;
+    document.getElementById('conteggi').innerHTML =
+      fatti + ' / ' + c.totale + ' passi' + (c.ko ? ' · <span class="n-ko">' + c.ko + ' con problemi</span>' : '');
+    document.getElementById('indice').innerHTML = SEZIONI.map((s) => {
+      const k = conta(s.passi);
+      const fattiS = k.ok + k.ko + k.salta;
+      const classe = k.ko ? 'male' : fattiS === k.totale ? 'finito' : '';
+      return '<a href="#' + s.id + '"><span>' + s.titolo + '</span><span class="quanti ' + classe + '">' + fattiS + '/' + k.totale + '</span></a>';
+    }).join('');
+  }
+
+  function visibile(p) {
+    const s = esitoDi(p.id).stato;
+    if (filtro === 'dafare') return !s;
+    if (filtro === 'problemi') return s === 'ko';
+    return true;
+  }
+
+  function elenco(voci) {
+    return voci.map((v) => '<li>' + v + '</li>').join('');
+  }
+
+  function disegnaPassi() {
+    const contenitore = document.getElementById('sezioni');
+    contenitore.innerHTML = '';
+    for (const s of SEZIONI) {
+      const passi = s.passi.filter(visibile);
+      const sez = document.createElement('section');
+      sez.className = 'sezione';
+      sez.id = s.id;
+      sez.innerHTML =
+        '<header><span class="etichetta">' + s.etichetta + '</span><h2>' + s.titolo + '</h2><p class="intro">' + s.intro + '</p></header>';
+      if (!passi.length) {
+        const v = document.createElement('div');
+        v.className = 'vuoto';
+        v.textContent = filtro === 'problemi' ? 'Nessun problema in questa sezione.' : 'Tutto fatto in questa sezione.';
+        sez.appendChild(v);
+      }
+      passi.forEach((p) => sez.appendChild(disegnaPasso(p, s.passi.indexOf(p) + 1, s)));
+      contenitore.appendChild(sez);
+    }
+    if (filtro === 'tutti') {
+      const fine = document.createElement('div');
+      fine.className = 'avviso-fine';
+      fine.innerHTML =
+        '<h2 style="font-size:22px;margin-bottom:6px">Quando hai finito</h2><p style="margin:0;max-width:68ch">Scrivimi “ho finito il collaudo”: leggo da qui esiti e note, e dal file di log (Impostazioni › Dati e log) i dettagli di quello che è successo. Non serve ricopiare niente.</p>';
+      contenitore.appendChild(fine);
+    }
+  }
+
+  function disegnaPasso(p, n, s) {
+    const e = esitoDi(p.id);
+    const aperto = aperti.has(p.id);
+    const el = document.createElement('article');
+    el.className = 'passo';
+    el.dataset.esito = e.stato;
+    el.dataset.aperto = String(aperto);
+    const num = SEZIONI.indexOf(s) + '.' + n;
+    el.innerHTML =
+      '<div class="testa-passo">' +
+      '<button class="apri" aria-expanded="' + aperto + '" aria-controls="d-' + p.id + '"><span class="num">' + num + '</span>' +
+      '<span class="titolo-passo">' + p.titolo + '<span class="freccia" aria-hidden="true">›</span></span></button>' +
+      '<div class="esiti" role="group" aria-label="Esito">' +
+      ['ok', 'ko', 'salta'].map((v) =>
+        '<button class="esito" data-v="' + v + '" aria-pressed="' + (e.stato === v) + '">' + { ok: '✓ Fatto', ko: '✗ Problema', salta: 'Salta' }[v] + '</button>'
+      ).join('') +
+      '</div></div>' +
+      '<div class="dettaglio" id="d-' + p.id + '"' + (aperto ? '' : ' hidden') + '>' +
+      '<div class="blocco"><h3>Cosa fare</h3><ol>' + elenco(p.fai) + '</ol></div>' +
+      '<div class="blocco"><h3>Cosa deve succedere</h3><ul>' + elenco(p.atteso) + '</ul></div>' +
+      (p.seno ? '<div class="blocco seno"><strong>Se non va:</strong> ' + p.seno + '</div>' : '') +
+      '<div class="nota"><label for="n-' + p.id + '">Nota (cosa hai visto, messaggi, a che ora)</label>' +
+      '<textarea id="n-' + p.id + '" placeholder="Facoltativa. Con l’ora la ritrovo subito nel log."></textarea></div>' +
+      '</div>';
+    el.querySelector('textarea').value = e.nota;
+
+    el.querySelector('.apri').addEventListener('click', () => {
+      if (aperti.has(p.id)) aperti.delete(p.id);
+      else aperti.add(p.id);
+      disegnaPassi();
+    });
+    el.querySelectorAll('.esito').forEach((b) =>
+      b.addEventListener('click', () => {
+        const v = b.dataset.v;
+        esiti[p.id] = { ...esitoDi(p.id), stato: esitoDi(p.id).stato === v ? '' : v };
+        // Un problema apre la nota: e' li' che serve il dettaglio.
+        if (esiti[p.id].stato === 'ko') aperti.add(p.id);
+        salva(p.id);
+        disegnaTestata();
+        disegnaPassi();
+        if (esiti[p.id].stato === 'ko') document.getElementById('n-' + p.id)?.focus();
+      })
+    );
+    const area = el.querySelector('textarea');
+    let timer = null;
+    const salvaNota = () => {
+      clearTimeout(timer);
+      if (esitoDi(p.id).nota === area.value) return;
+      esiti[p.id] = { ...esitoDi(p.id), nota: area.value };
+      salva(p.id);
+    };
+    area.addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = setTimeout(salvaNota, 1200);
+    });
+    area.addEventListener('blur', salvaNota);
+    return el;
+  }
+
+  function riepilogo() {
+    const righe = ['Collaudo Takeline — ' + new Date().toLocaleString('it-IT')];
+    for (const s of SEZIONI) {
+      righe.push('', s.etichetta + ' · ' + s.titolo);
+      s.passi.forEach((p, i) => {
+        const e = esitoDi(p.id);
+        const segno = { ok: '✓', ko: '✗', salta: '–' }[e.stato] || '·';
+        righe.push('  ' + segno + ' ' + SEZIONI.indexOf(s) + '.' + (i + 1) + ' ' + p.titolo + (e.nota ? ' — ' + e.nota.replace(/\s+/g, ' ') : ''));
+      });
+    }
+    return righe.join('\n');
+  }
+
+  // --- avvio ------------------------------------------------------------------
+  document.querySelectorAll('[data-filtro]').forEach((b) =>
+    b.addEventListener('click', () => {
+      filtro = b.dataset.filtro;
+      document.querySelectorAll('[data-filtro]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      disegnaPassi();
+    })
+  );
+  document.getElementById('copia').addEventListener('click', async (ev) => {
+    const b = ev.currentTarget;
+    const testo = riepilogo();
+    try {
+      await navigator.clipboard.writeText(testo);
+      b.textContent = 'Copiato';
+    } catch {
+      // Ripiego: il riepilogo in un campo selezionato, da copiare a mano.
+      const area = document.createElement('textarea');
+      area.value = testo;
+      area.style.cssText = 'position:fixed;inset:10% 5%;z-index:20;width:90%;height:80%';
+      document.body.appendChild(area);
+      area.select();
+      area.addEventListener('blur', () => area.remove());
+      b.textContent = 'Selezionato: Ctrl+C';
+    }
+    setTimeout(() => (b.textContent = 'Copia riepilogo'), 2500);
+  });
+
+  leggiLocale();
+  // Prima volta: apri il primo passo da fare, cosi' si vede subito com'e' fatto un passo.
+  const primo = tuttiPassi.find((p) => !esitoDi(p.id).stato);
+  if (primo) aperti.add(primo.id);
+  disegnaTestata();
+  disegnaPassi();
+  mostraSalvataggio('locale', 'Salvato in questo browser');
+
+  (async () => {
+    const claude = window.claude;
+    if (!claude?.use) return;
+    try {
+      db = await claude.use('db');
+    } catch {
+      db = null;
+    }
+    if (!db) return;
+    mostraSalvataggio('db', 'Salvato nella pagina');
+    db.collection('esiti').onSnapshot(
+      (snap) => {
+        for (const d of snap.docs) {
+          const v = d.data();
+          if (!v) continue;
+          // Non sovrascrivere la nota che si sta scrivendo adesso.
+          const scrivendo = document.activeElement?.id === 'n-' + d.id;
+          esiti[d.id] = { stato: v.stato || '', nota: scrivendo ? esitoDi(d.id).nota : v.nota || '' };
+        }
+        scriviLocale();
+        disegnaTestata();
+        if (!document.activeElement || document.activeElement.tagName !== 'TEXTAREA') disegnaPassi();
+      },
+      (e) => mostraSalvataggio('locale', 'Salvataggio non disponibile (' + (e?.code || 'errore') + '): resta in questo browser')
+    );
+  })();
+</script>
