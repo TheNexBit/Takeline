@@ -42,6 +42,13 @@ export interface EsitoBackup {
   cartellaObs: string;
 }
 
+/** Backtrack del plugin Aitum Vertical Canvas, letto dalla config di OBS. */
+export interface BacktrackVerticale {
+  installato: boolean;
+  attivo: boolean;
+  secondi: number;
+}
+
 export interface SpazioDisco {
   misuratoSu: string;
   libero: number;
@@ -56,6 +63,8 @@ export interface ControlloCartella {
 
 export interface InfoFfmpeg {
   trovato: boolean;
+  /** ffprobe nella stessa cartella: senza, sync, capitoli e post non partono. */
+  ffprobe: boolean;
   comando: string;
   versione: string | null;
   errore: string | null;
@@ -203,6 +212,7 @@ export const backend = {
   jsonImporta: (percorso: string) => invoke<unknown>('json_importa', { percorso }),
   backupObs: (istantanea: unknown, motivo: string, cartellaObs: string) =>
     invoke<EsitoBackup>('obs_backup', { istantanea, motivo, cartellaObs }),
+  backtrackVerticale: (cartellaObs: string) => invoke<BacktrackVerticale>('obs_backtrack_verticale', { cartellaObs }),
   reaperStato: (conn: ReaperConn) => invoke<ReaperStato>('reaper_status', { conn }),
   reaperAzione: (conn: ReaperConn, azione: string) => invoke<void>('reaper_action', { conn, azione }),
   spazioDisco: (percorso: string) => invoke<SpazioDisco>('disk_space', { percorso }),

@@ -12,14 +12,14 @@
 //!
 //! Si verifica anche che il video sia a frame rate costante.
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::Command;
 
 use rustfft::{num_complex::Complex32, FftPlanner};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::system::ffmpeg_command;
+use crate::system::{ffmpeg_command, ffprobe_path};
 
 /// Frequenza di analisi: 62,5 us per campione, con l'interpolazione si scende molto sotto.
 const SR_ANALISI: u32 = 16_000;
@@ -29,15 +29,8 @@ const DRIFT_MAX_PPM: f64 = 1000.0;
 // --- strumenti esterni ---------------------------------------------------
 
 pub(crate) fn ffprobe_command(ffmpeg: &str) -> Command {
-    let p = ffmpeg.trim();
-    let exe = if p.is_empty() {
-        PathBuf::from("ffprobe")
-    } else {
-        let f = Path::new(p);
-        f.with_file_name(if f.extension().is_some() { "ffprobe.exe" } else { "ffprobe" })
-    };
     // Stessa cartella e stesse opzioni (niente finestra di console) di ffmpeg.
-    let mut cmd = ffmpeg_command(&exe.to_string_lossy());
+    let mut cmd = ffmpeg_command(&ffprobe_path(ffmpeg).to_string_lossy());
     cmd.args(["-v", "error", "-of", "json"]);
     cmd
 }

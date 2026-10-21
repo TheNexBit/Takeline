@@ -241,6 +241,26 @@ export async function eseguiPreflight(c: ContestoPreflight): Promise<Controllo[]
         : ok('replay', 'Replay buffer', r.attivo ? `Attivo, ${Math.round(r.secondiMax / 60)} minuti` : 'Abilitato ma fermo: si riavvia da solo');
     }),
 
+    // Il backtrack del canvas verticale non ha un buffer suo: usa quello
+    // principale di OBS. Senza, OBS alza un dialogo modale a ogni REC.
+    prova('backtrack', 'Backtrack verticale', async () => {
+      const bt = await backend.backtrackVerticale(imp.obs.cartellaConfig);
+      if (!bt.installato) return ok('backtrack', 'Backtrack verticale', 'Plugin Aitum Vertical non installato');
+      if (!bt.attivo) return ok('backtrack', 'Backtrack verticale', 'Spento nel canvas verticale');
+      const r = await motore.statoReplay();
+      return r.disponibile
+        ? ok('backtrack', 'Backtrack verticale', `Acceso, ${bt.secondi} s${r.attivo ? '' : ' (parte con il buffer di replay)'}`)
+        : {
+            id: 'backtrack',
+            titolo: 'Backtrack verticale',
+            esito: 'avviso',
+            dettaglio:
+              'Acceso nel canvas verticale ma in OBS il Buffer di replay è disattivato: a ogni REC compare l’errore ' +
+              '«no replay buffer found» e il verticale non viene registrato. Abilita il Buffer di replay in OBS › ' +
+              'Impostazioni › Uscita, oppure spegni il backtrack nel pannello Vertical.',
+          };
+    }),
+
     prova('pedale', 'Pedale MIDI', async () => {
       const { mappa, dispositivo } = imp.pedale;
       const collegato = dispositivo ? c.pedale.dispositivi.includes(dispositivo) : c.pedale.dispositivi.length > 0;
@@ -257,17 +277,30 @@ export async function eseguiPreflight(c: ContestoPreflight): Promise<Controllo[]
       };
     }),
 
-    prova('ffmpeg', 'ffmpeg', async () =>
-      c.ffmpeg?.trovato
+    prova('ffmpeg', 'ffmpeg', async () => {
+      if (!c.ffmpeg?.trovato) {
+        return {
+          id: 'ffmpeg',
+          titolo: 'ffmpeg',
+          esito: 'avviso',
+          dettaglio: 'Non trovato: niente sync né post-produzione (winget install Gyan.FFmpeg).',
+          azione: { tipo: 'impostazioni', etichetta: 'Impostazioni' },
+        };
+      }
+      // Sync, capitoli, proxy e loudnorm passano da ffprobe, che Takeline cerca
+      // accanto a ffmpeg: le copie incluse in altri programmi spesso non ce l'hanno.
+      return c.ffmpeg.ffprobe
         ? ok('ffmpeg', 'ffmpeg', `Versione ${c.ffmpeg.versione ?? 'sconosciuta'}`)
         : {
             id: 'ffmpeg',
             titolo: 'ffmpeg',
             esito: 'avviso',
-            dettaglio: 'Non trovato: niente sync né post-produzione (winget install Gyan.FFmpeg).',
+            dettaglio:
+              'ffmpeg c’è ma ffprobe manca nella stessa cartella: sync, capitoli, proxy e normalizzazione ' +
+              'falliranno. Indica una build completa (winget install Gyan.FFmpeg) invece di quella inclusa in un altro programma.',
             azione: { tipo: 'impostazioni', etichetta: 'Impostazioni' },
-          },
-    ),
+          };
+    }),
   ]);
   return [...base, ...controlli];
 }
