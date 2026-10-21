@@ -85,6 +85,8 @@ pub fn ensure_dir(percorso: String) -> DirCheck {
 #[serde(rename_all = "camelCase")]
 pub struct FfmpegInfo {
     pub trovato: bool,
+    /// ffprobe nella stessa cartella: senza, sync, capitoli e post non partono.
+    pub ffprobe: bool,
     pub comando: String,
     pub versione: Option<String>,
     pub errore: Option<String>,
@@ -103,14 +105,29 @@ pub fn ffmpeg_command(percorso: &str) -> Command {
     cmd
 }
 
+/// ffprobe si cerca accanto a ffmpeg: le build complete lo portano con se',
+/// quelle incluse in altri programmi (ShareX, CapCut) spesso no.
+pub fn ffprobe_path(ffmpeg: &str) -> PathBuf {
+    let p = ffmpeg.trim();
+    if p.is_empty() {
+        return PathBuf::from("ffprobe");
+    }
+    let f = Path::new(p);
+    f.with_file_name(if f.extension().is_some() { "ffprobe.exe" } else { "ffprobe" })
+}
+
 /// ffmpeg resta esterno: qui si verifica solo che ci sia.
 #[tauri::command]
 pub async fn ffmpeg_info(percorso: String) -> FfmpegInfo {
     let comando = if percorso.trim().is_empty() { "ffmpeg (dal PATH)".to_string() } else { percorso.clone() };
+    let accanto = ffprobe_path(&percorso).to_string_lossy().into_owned();
     let out = tauri::async_runtime::spawn_blocking(move || ffmpeg_command(&percorso).arg("-version").output())
         .await
         .map_err(|e| e.to_string())
         .and_then(|r| r.map_err(|e| e.to_string()));
+    let ffprobe = tauri::async_runtime::spawn_blocking(move || ffmpeg_command(&accanto).arg("-version").output())
+        .await
+        .is_ok_and(|r| r.is_ok_and(|o| o.status.success()));
     match out {
         Ok(o) if o.status.success() => {
             let text = String::from_utf8_lossy(&o.stdout);
@@ -119,16 +136,18 @@ pub async fn ffmpeg_info(percorso: String) -> FfmpegInfo {
                 .strip_prefix("ffmpeg version ")
                 .and_then(|r| r.split_whitespace().next())
                 .map(str::to_string);
-            FfmpegInfo { trovato: true, comando, versione, errore: None }
+            FfmpegInfo { trovato: true, ffprobe, comando, versione, errore: None }
         }
         Ok(o) => FfmpegInfo {
             trovato: false,
+            ffprobe,
             comando,
             versione: None,
             errore: Some(format!("ffmpeg e' uscito con codice {:?}", o.status.code())),
         },
         Err(e) => FfmpegInfo {
             trovato: false,
+            ffprobe,
             comando,
             versione: None,
             errore: Some(format!("ffmpeg non trovato: {e}")),

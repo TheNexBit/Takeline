@@ -101,9 +101,11 @@ export function installa() {
       case 'ensure_dir':
         return { creata: false, scrivibile: true, errore: null };
       case 'ffmpeg_info':
-        return { trovato: true, comando: 'ffmpeg (dal PATH)', versione: '7.1', errore: null };
+        return { trovato: true, ffprobe: true, comando: 'ffmpeg (dal PATH)', versione: '7.1', errore: null };
       case 'db_info':
         return { percorso: 'C:\\anteprima\\takeline\\takeline.db', versioneSchema: 1, take: 0 };
+      case 'obs_backtrack_verticale':
+        return { installato: true, attivo: true, secondi: 15 };
       case 'obs_backup':
         return { cartella: 'C:\\anteprima\\takeline\\backup-obs\\anteprima', fileCopiati: 7, cartellaObs: '' };
       default:

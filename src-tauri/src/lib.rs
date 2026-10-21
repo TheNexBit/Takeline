@@ -65,6 +65,7 @@ pub fn run() {
             docs::json_esporta,
             docs::json_importa,
             obs_backup::obs_backup,
+            obs_backup::obs_backtrack_verticale,
             reaper::reaper_status,
             reaper::reaper_action,
             reaper::reaper_bridge,

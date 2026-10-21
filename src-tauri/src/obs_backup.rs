@@ -3,6 +3,9 @@
 //! Copia `basic/scenes` (scene collection) e `basic/profiles` (profili) dalla
 //! cartella di configurazione di OBS, piu' l'istantanea letta via websocket.
 //! Sono file piccoli: copiamo tutto, cosi' il ripristino e' sempre completo.
+//!
+//! Dalla stessa cartella leggiamo anche la configurazione dei plugin, per i
+//! controlli del pre-flight che il websocket non espone.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -109,4 +112,83 @@ pub fn obs_backup(
         file_copiati: n,
         cartella_obs: obs.display().to_string(),
     })
+}
+
+/// Stato del backtrack del plugin Aitum Vertical Canvas, letto dalla sua
+/// configurazione. Il backtrack si appoggia al buffer di replay principale di
+/// OBS: se quello e' disattivato nel profilo, a ogni REC il plugin mostra
+/// "no replay buffer found" e il verticale non viene registrato.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BacktrackVerticale {
+    /// Il plugin ha una configurazione in questa installazione di OBS.
+    pub installato: bool,
+    /// Almeno un canvas verticale ha il backtrack acceso.
+    pub attivo: bool,
+    /// Durata del backtrack del primo canvas acceso.
+    pub secondi: u32,
+}
+
+fn leggi_backtrack(config: &Value) -> BacktrackVerticale {
+    let canvas = config["canvas"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .find(|c| c["backtrack"].as_bool().unwrap_or(false));
+    BacktrackVerticale {
+        installato: true,
+        attivo: canvas.is_some(),
+        secondi: canvas.and_then(|c| c["backtrack_seconds"].as_u64()).unwrap_or(0) as u32,
+    }
+}
+
+#[tauri::command]
+pub fn obs_backtrack_verticale(state: State<'_, AppState>, cartella_obs: Option<String>) -> BacktrackVerticale {
+    let file = obs_dir(&state, cartella_obs)
+        .join("plugin_config")
+        .join("vertical-canvas")
+        .join("config.json");
+    let assente = BacktrackVerticale { installato: false, attivo: false, secondi: 0 };
+    match fs::read_to_string(&file).ok().and_then(|t| serde_json::from_str::<Value>(&t).ok()) {
+        Some(config) => leggi_backtrack(&config),
+        None => assente,
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn backtrack_acceso_porta_i_secondi() {
+        let c = json!({ "canvas": [{ "backtrack": true, "backtrack_seconds": 15 }] });
+        let r = leggi_backtrack(&c);
+        assert!(r.installato && r.attivo);
+        assert_eq!(r.secondi, 15);
+    }
+
+    #[test]
+    fn backtrack_spento_resta_installato() {
+        let c = json!({ "canvas": [{ "backtrack": false, "backtrack_seconds": 15 }] });
+        let r = leggi_backtrack(&c);
+        assert!(r.installato && !r.attivo);
+        assert_eq!(r.secondi, 0);
+    }
+
+    /// Config di una versione diversa del plugin: nessun campo noto, nessun panico.
+    #[test]
+    fn config_senza_canvas() {
+        let r = leggi_backtrack(&json!({}));
+        assert!(r.installato && !r.attivo);
+    }
+
+    #[test]
+    fn piu_canvas_prende_il_primo_acceso() {
+        let c = json!({ "canvas": [
+            { "backtrack": false, "backtrack_seconds": 15 },
+            { "backtrack": true, "backtrack_seconds": 30 },
+        ] });
+        assert_eq!(leggi_backtrack(&c).secondi, 30);
+    }
 }

@@ -36,7 +36,10 @@ camera / schermo ─────────────────► OBS ─�
 - [OBS Studio](https://obsproject.com/) 30 o successivo (obs-websocket v5 è incluso)
 - [Reaper](https://www.reaper.fm/)
 - [ffmpeg](https://ffmpeg.org/) nel `PATH` o indicato nelle impostazioni:
-  `winget install Gyan.FFmpeg`. Takeline lo usa ma non lo include.
+  `winget install Gyan.FFmpeg`. Takeline lo usa ma non lo include. Serve una build
+  completa: `ffprobe` viene cercato nella stessa cartella di `ffmpeg` e senza di lui
+  sync, capitoli, proxy e normalizzazione non partono. Le copie incluse in altri
+  programmi (ShareX, CapCut) spesso hanno solo `ffmpeg.exe`; il pre-flight lo segnala.
 
 Per compilare dai sorgenti servono anche:
 
@@ -266,6 +269,11 @@ scaldando, un colpo di pedale lo salva; con la take continua di Reaper diventa a
 region “replay” nell’audio. Il replay buffer va abilitato una volta in OBS:
 **Impostazioni › Uscita › Buffer di replay**.
 
+Al buffer di replay si appoggia anche il *backtrack* del plugin **Aitum Vertical Canvas**,
+che non ne ha uno suo: se è acceso nel canvas verticale ma il buffer è disabilitato nel
+profilo, a ogni REC OBS alza un dialogo «no replay buffer found» e il verticale non viene
+registrato. Il pre-flight lo segnala prima che succeda.
+
 ### Clap
 
 All’avvio di ogni take Takeline fa lampeggiare di bianco la stage view e suona un click
@@ -392,7 +400,7 @@ Prima di ogni take (e quando premi **Controlla** nel pannello della Regia) Takel
 verifica: OBS connesso, preset applicato e coerente con OBS, cartella scrivibile, spazio
 su disco, encoder (avvisa se è software in 4K), fotogrammi persi da OBS, frame rate
 costante, sorgenti audio (traccia guida mutata = errore), Reaper raggiungibile con tracce
-armate, script bridge, replay buffer, pedale MIDI, ffmpeg.
+armate, script bridge, replay buffer, backtrack del canvas verticale, pedale MIDI, ffmpeg.
 
 Ogni controllo ha un esito (ok, avviso, errore) e, se serve, un pulsante per risolvere
 (*Connetti*, *Riapplica il preset*, *Arma tutte*, *Libera spazio*, *Configura*…). **Un
